@@ -1,0 +1,452 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "For_each": {
+                "actions": {
+                    "Compose": {
+                        "inputs": "@body('Get_message_details')",
+                        "runAfter": {
+                            "Get_message_details": [
+                                "SUCCEEDED"
+                            ]
+                        },
+                        "type": "Compose"
+                    },
+                    "For_each_1": {
+                        "actions": {
+                            "Reply_with_a_message_in_a_channel": {
+                                "inputs": {
+                                    "body": {
+                                        "messageBody": "<p>@{items('For_each_1')?['message']?['content']}</p>",
+                                        "parentMessageId": "@items('For_each')?['messageId']",
+                                        "recipient": {
+                                            "channelId": "",
+                                            "groupId": ""
+                                        }
+                                    },
+                                    "host": {
+                                        "connection": {
+                                            "referenceName": "teams"
+                                        }
+                                    },
+                                    "method": "post",
+                                    "path": "/v1.0/teams/conversation/replyWithMessage/poster/Flow bot/location/@{encodeURIComponent('Channel')}"
+                                },
+                                "type": "ApiConnection"
+                            }
+                        },
+                        "foreach": "@outputs('Parse_JSON_1')?['body']?['choices']",
+                        "runAfter": {
+                            "Parse_JSON_1": [
+                                "SUCCEEDED"
+                            ]
+                        },
+                        "type": "foreach"
+                    },
+                    "Get_message_details": {
+                        "inputs": {
+                            "body": {
+                                "recipient": {
+                                    "channelId": "",
+                                    "groupId": "",
+                                    "parentMessageId": "@items('For_each')?['replyToMessageId']"
+                                }
+                            },
+                            "host": {
+                                "connection": {
+                                    "referenceName": "teams"
+                                }
+                            },
+                            "method": "post",
+                            "path": "/beta/teams/messages/@{encodeURIComponent(items('For_each')?['messageId'])}/messageType/@{encodeURIComponent('channel')}"
+                        },
+                        "type": "ApiConnection"
+                    },
+                    "HTTP": {
+                        "inputs": {
+                            "body": {
+                                "frequency_penalty": 0,
+                                "max_tokens": 800,
+                                "messages": [
+                                    {
+                                        "content": "Your name is LOA. You assist managers returning from a leave of absence. You provide valuable information about what has happened while your user was away. Ignore any html formatting in the inputs, only answer the question",
+                                        "role": "system"
+                                    },
+                                    {
+                                        "content": "@body('Parse_JSON')?['body']?['content']",
+                                        "role": "user"
+                                    }
+                                ],
+                                "presence_penalty": 0,
+                                "stop": null,
+                                "temperature": 0.7,
+                                "top_p": 0.95
+                            },
+                            "headers": {
+                                "Content-Type": "application/json",
+                                "api-key": ""
+                            },
+                            "method": "POST",
+                            "uri": ""
+                        },
+                        "runAfter": {
+                            "Parse_JSON": [
+                                "SUCCEEDED"
+                            ]
+                        },
+                        "runtimeConfiguration": {
+                            "contentTransfer": {
+                                "transferMode": "Chunked"
+                            }
+                        },
+                        "type": "Http"
+                    },
+                    "Parse_JSON": {
+                        "inputs": {
+                            "content": "@outputs('Compose')",
+                            "schema": {
+                                "properties": {
+                                    "@@odata.context": {
+                                        "type": "string"
+                                    },
+                                    "attachments": {
+                                        "type": "array"
+                                    },
+                                    "body": {
+                                        "properties": {
+                                            "content": {
+                                                "type": "string"
+                                            },
+                                            "contentType": {
+                                                "type": "string"
+                                            },
+                                            "plainTextContent": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "channelId": {
+                                        "type": "string"
+                                    },
+                                    "channelIdentity": {
+                                        "properties": {
+                                            "channelId": {
+                                                "type": "string"
+                                            },
+                                            "teamId": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "chatId": {},
+                                    "createdDateTime": {
+                                        "type": "string"
+                                    },
+                                    "deletedDateTime": {},
+                                    "etag": {
+                                        "type": "string"
+                                    },
+                                    "eventDetail": {},
+                                    "from": {
+                                        "properties": {
+                                            "application": {},
+                                            "device": {},
+                                            "user": {
+                                                "properties": {
+                                                    "@@odata.type": {
+                                                        "type": "string"
+                                                    },
+                                                    "displayName": {
+                                                        "type": "string"
+                                                    },
+                                                    "id": {
+                                                        "type": "string"
+                                                    },
+                                                    "tenantId": {
+                                                        "type": "string"
+                                                    },
+                                                    "userIdentityType": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "id": {
+                                        "type": "string"
+                                    },
+                                    "importance": {
+                                        "type": "string"
+                                    },
+                                    "lastEditedDateTime": {},
+                                    "lastModifiedDateTime": {
+                                        "type": "string"
+                                    },
+                                    "locale": {
+                                        "type": "string"
+                                    },
+                                    "mentions": {
+                                        "type": "array"
+                                    },
+                                    "messageLink": {
+                                        "type": "string"
+                                    },
+                                    "messageType": {
+                                        "type": "string"
+                                    },
+                                    "policyViolation": {},
+                                    "reactions": {
+                                        "type": "array"
+                                    },
+                                    "replyToId": {
+                                        "type": "string"
+                                    },
+                                    "subject": {
+                                        "type": "string"
+                                    },
+                                    "summary": {},
+                                    "teamId": {
+                                        "type": "string"
+                                    },
+                                    "threadType": {
+                                        "type": "string"
+                                    },
+                                    "webUrl": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "runAfter": {
+                            "Compose": [
+                                "SUCCEEDED"
+                            ]
+                        },
+                        "type": "ParseJson"
+                    },
+                    "Parse_JSON_1": {
+                        "inputs": {
+                            "content": "@body('HTTP')",
+                            "schema": {
+                                "properties": {
+                                    "choices": {
+                                        "items": {
+                                            "properties": {
+                                                "content_filter_results": {
+                                                    "properties": {
+                                                        "hate": {
+                                                            "properties": {
+                                                                "filtered": {
+                                                                    "type": "boolean"
+                                                                },
+                                                                "severity": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "self_harm": {
+                                                            "properties": {
+                                                                "filtered": {
+                                                                    "type": "boolean"
+                                                                },
+                                                                "severity": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "sexual": {
+                                                            "properties": {
+                                                                "filtered": {
+                                                                    "type": "boolean"
+                                                                },
+                                                                "severity": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "violence": {
+                                                            "properties": {
+                                                                "filtered": {
+                                                                    "type": "boolean"
+                                                                },
+                                                                "severity": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "finish_reason": {
+                                                    "type": "string"
+                                                },
+                                                "index": {
+                                                    "type": "integer"
+                                                },
+                                                "message": {
+                                                    "properties": {
+                                                        "content": {
+                                                            "type": "string"
+                                                        },
+                                                        "role": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "required": [
+                                                "index",
+                                                "finish_reason",
+                                                "message",
+                                                "content_filter_results"
+                                            ],
+                                            "type": "object"
+                                        },
+                                        "type": "array"
+                                    },
+                                    "created": {
+                                        "type": "integer"
+                                    },
+                                    "id": {
+                                        "type": "string"
+                                    },
+                                    "model": {
+                                        "type": "string"
+                                    },
+                                    "object": {
+                                        "type": "string"
+                                    },
+                                    "prompt_filter_results": {
+                                        "items": {
+                                            "properties": {
+                                                "content_filter_results": {
+                                                    "properties": {
+                                                        "hate": {
+                                                            "properties": {
+                                                                "filtered": {
+                                                                    "type": "boolean"
+                                                                },
+                                                                "severity": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "self_harm": {
+                                                            "properties": {
+                                                                "filtered": {
+                                                                    "type": "boolean"
+                                                                },
+                                                                "severity": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "sexual": {
+                                                            "properties": {
+                                                                "filtered": {
+                                                                    "type": "boolean"
+                                                                },
+                                                                "severity": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "violence": {
+                                                            "properties": {
+                                                                "filtered": {
+                                                                    "type": "boolean"
+                                                                },
+                                                                "severity": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "prompt_index": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "prompt_index",
+                                                "content_filter_results"
+                                            ],
+                                            "type": "object"
+                                        },
+                                        "type": "array"
+                                    },
+                                    "usage": {
+                                        "properties": {
+                                            "completion_tokens": {
+                                                "type": "integer"
+                                            },
+                                            "prompt_tokens": {
+                                                "type": "integer"
+                                            },
+                                            "total_tokens": {
+                                                "type": "integer"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "runAfter": {
+                            "HTTP": [
+                                "SUCCEEDED"
+                            ]
+                        },
+                        "type": "ParseJson"
+                    }
+                },
+                "foreach": "@triggerBody()?['value']",
+                "runAfter": {},
+                "type": "foreach"
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {},
+        "triggers": {
+            "When_keywords_are_mentioned": {
+                "inputs": {
+                    "body": {
+                        "channels": [
+                            ""
+                        ],
+                        "groupId": "",
+                        "notificationUrl": "@{listCallbackUrl()}"
+                    },
+                    "host": {
+                        "connection": {
+                            "referenceName": "teams"
+                        }
+                    },
+                    "path": "/beta/subscriptions/keywordtrigger/threadType/@{encodeURIComponent('channel')}",
+                    "queries": {
+                        "$search": "LOA"
+                    }
+                },
+                "type": "ApiConnectionWebhook"
+            }
+        }
+    },
+    "kind": "Stateful"
+}
